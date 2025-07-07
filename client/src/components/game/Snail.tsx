@@ -86,16 +86,7 @@ export default function Snail({ position, rotation, isPlayer, color, shellColor 
     <group ref={groupRef} position={position} rotation={rotation}>
       <primitive object={snailGeometry} />
       
-      {/* Ooze bombs for this snail */}
-      {oozeBombs
-        .filter(bomb => bomb.snailId === (isPlayer ? 'player' : 'ai'))
-        .map((bomb, index) => (
-          <OozeBomb
-            key={`${bomb.snailId}-${index}`}
-            position={[bomb.position.x, bomb.position.y, bomb.position.z]}
-            active={bomb.active}
-          />
-        ))}
+
       
       {/* Ooze trail particles */}
       {oozeTrails

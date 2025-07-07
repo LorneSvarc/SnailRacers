@@ -282,6 +282,9 @@ export const useSnailRacing = create<SnailRacingState>()(
         oozeBombs: [...state.oozeBombs, newBomb],
       });
       
+      // Debug log
+      console.log('Deployed ooze bomb:', newBomb);
+      
       // Play sound effect
       const { playHit } = useAudio.getState();
       playHit();

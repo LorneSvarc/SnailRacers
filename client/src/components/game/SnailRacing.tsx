@@ -5,6 +5,7 @@ import RaceTrack from "./RaceTrack";
 import Snail from "./Snail";
 import GameUI from "./GameUI";
 import Environment from "./Environment";
+import OozeBomb from "./OozeBomb";
 import { useSnailRacing, useSnailRacingControls } from "../../lib/stores/useSnailRacing";
 import { useAudio } from "../../lib/stores/useAudio";
 
@@ -14,6 +15,7 @@ export default function SnailRacing() {
     gameState, 
     playerSnail, 
     aiSnails, 
+    oozeBombs,
     initializeGame, 
     updateGame,
     resetGame 
@@ -100,6 +102,15 @@ export default function SnailRacing() {
           isPlayer={false}
           color={snail.color}
           shellColor={snail.shellColor}
+        />
+      ))}
+      
+      {/* All ooze bombs */}
+      {oozeBombs.map((bomb, index) => (
+        <OozeBomb
+          key={`${bomb.id}`}
+          position={[bomb.position.x, bomb.position.y, bomb.position.z]}
+          active={bomb.active}
         />
       ))}
       
