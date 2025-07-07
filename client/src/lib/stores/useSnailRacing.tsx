@@ -15,6 +15,7 @@ interface SnailData {
   shellColor: string;
   boosted: boolean;
   boostTimer: number;
+  bombCooldown: number; // Time until next bomb can be deployed
 }
 
 interface OozeBomb {
@@ -57,6 +58,7 @@ const BOOST_DURATION = 4.0; // 4 seconds boost duration
 const OOZE_BOMB_TRAVEL_SPEED = 8.0;
 const OOZE_BOMB_RANGE = 4.0;
 const AI_BOMB_DETECTION_RANGE = 8.0; // How far AI can see bombs
+const BOMB_COOLDOWN_TIME = 10.0; // 10 second cooldown between bombs
 const AI_LANE_CHANGE_SPEED = 0.3; // How fast AI changes lanes
 
 export const useSnailRacing = create<SnailRacingState>()(
@@ -84,6 +86,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         shellColor: colorData.shellColor,
         boosted: false,
         boostTimer: 0,
+        bombCooldown: 0, // Start with no cooldown
       }));
       
       set({
@@ -97,6 +100,7 @@ export const useSnailRacing = create<SnailRacingState>()(
           shellColor: "#4ECDC4",
           boosted: false,
           boostTimer: 0,
+          bombCooldown: 0, // Start with no cooldown
         },
         aiSnails,
         oozeBombs: [],
@@ -167,14 +171,17 @@ export const useSnailRacing = create<SnailRacingState>()(
           return { ...trail, timer: newTimer };
         }).filter(Boolean) as OozeTrail[];
         
-        // Update player snail - only boost timer (collision handled in movement)
+        // Update player snail - boost timer and bomb cooldown
         let updatedPlayerSnail = state.playerSnail;
-        if (updatedPlayerSnail && updatedPlayerSnail.boostTimer > 0) {
-          const newTimer = updatedPlayerSnail.boostTimer - delta;
+        if (updatedPlayerSnail) {
+          const newBoostTimer = Math.max(0, updatedPlayerSnail.boostTimer - delta);
+          const newBombCooldown = Math.max(0, updatedPlayerSnail.bombCooldown - delta);
+          
           updatedPlayerSnail = {
             ...updatedPlayerSnail,
-            boostTimer: Math.max(0, newTimer),
-            boosted: newTimer > 0,
+            boostTimer: newBoostTimer,
+            boosted: newBoostTimer > 0,
+            bombCooldown: newBombCooldown,
           };
         }
         
@@ -182,12 +189,13 @@ export const useSnailRacing = create<SnailRacingState>()(
         const updatedAiSnails = state.aiSnails.map((snail, index) => {
           let updatedSnail = { ...snail };
           
-          // Update boost timer
-          if (updatedSnail.boostTimer > 0) {
-            const newTimer = updatedSnail.boostTimer - delta;
-            updatedSnail.boostTimer = Math.max(0, newTimer);
-            updatedSnail.boosted = newTimer > 0;
-          }
+          // Update boost timer and bomb cooldown
+          const newBoostTimer = Math.max(0, updatedSnail.boostTimer - delta);
+          const newBombCooldown = Math.max(0, updatedSnail.bombCooldown - delta);
+          
+          updatedSnail.boostTimer = newBoostTimer;
+          updatedSnail.boosted = newBoostTimer > 0;
+          updatedSnail.bombCooldown = newBombCooldown;
           
           const newPosition = snail.position.clone();
           let currentSpeed = snail.boosted ? SNAIL_BOOST_SPEED : snail.speed;
@@ -243,12 +251,14 @@ export const useSnailRacing = create<SnailRacingState>()(
           
           updatedSnail.position = newPosition;
           
-          // Strategic bomb deployment - more reasonable frequency
+          // Strategic bomb deployment - only if cooldown is finished
           const shouldDeployBomb = 
-            Math.random() < 0.002 || // 0.2% chance per frame (reasonable)
-            (newPosition.x > -10 && Math.random() < 0.005) || // 0.5% chance after midway
-            (updatedSnail.boosted && Math.random() < 0.008) || // 0.8% chance when boosted
-            (nearestActiveBomb && nearestActiveBomb.distance < 5 && Math.random() < 0.01); // 1% chance when near other bombs
+            updatedSnail.bombCooldown <= 0 && (
+              Math.random() < 0.002 || // 0.2% chance per frame (reasonable)
+              (newPosition.x > -10 && Math.random() < 0.005) || // 0.5% chance after midway
+              (updatedSnail.boosted && Math.random() < 0.008) || // 0.8% chance when boosted
+              (nearestActiveBomb && nearestActiveBomb.distance < 5 && Math.random() < 0.01) // 1% chance when near other bombs
+            );
           
           if (shouldDeployBomb) {
             console.log(`🤖 AI ${index} deploying bomb!`);
@@ -266,6 +276,9 @@ export const useSnailRacing = create<SnailRacingState>()(
             // Add the bomb to the current update
             updatedOozeBombs.push(newBomb);
             console.log(`💣 AI bomb ${bombId} deployed at x:${updatedSnail.position.x.toFixed(1)}`);
+            
+            // Set cooldown for this AI snail
+            updatedSnail.bombCooldown = BOMB_COOLDOWN_TIME;
           }
           
           return updatedSnail;
@@ -319,7 +332,12 @@ export const useSnailRacing = create<SnailRacingState>()(
       const isPlayer = snailId === 'player';
       const snail = isPlayer ? state.playerSnail : state.aiSnails[parseInt(snailId.split('-')[1])];
       
-      if (!snail) return;
+      if (!snail || snail.bombCooldown > 0) {
+        if (snail && snail.bombCooldown > 0) {
+          console.log(`❌ ${snailId} bomb on cooldown: ${snail.bombCooldown.toFixed(1)}s remaining`);
+        }
+        return;
+      }
       
       // Deploy bomb FROM the snail's shell position 
       const bombPosition = snail.position.clone();
@@ -334,15 +352,27 @@ export const useSnailRacing = create<SnailRacingState>()(
         timer: 10.0, // 10 seconds active time
       };
       
-      set({
-        oozeBombs: [...state.oozeBombs, newBomb],
-      });
+      // Update snail's cooldown along with adding the bomb
+      if (isPlayer) {
+        set({
+          playerSnail: { ...state.playerSnail!, bombCooldown: BOMB_COOLDOWN_TIME },
+          oozeBombs: [...state.oozeBombs, newBomb],
+        });
+      } else {
+        const aiIndex = parseInt(snailId.split('-')[1]);
+        set({
+          aiSnails: state.aiSnails.map((s, i) => 
+            i === aiIndex ? { ...s, bombCooldown: BOMB_COOLDOWN_TIME } : s
+          ),
+          oozeBombs: [...state.oozeBombs, newBomb],
+        });
+      }
       
       // Debug: Check if bomb was actually added
       console.log(`💣 Bomb added to state. Total bombs: ${get().oozeBombs.length}`);
       
       // Debug log bomb deployment
-      console.log(`🚀 ${snailId.toUpperCase()} DEPLOYED BOMB at x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)} → will travel to x:${(bombPosition.x + OOZE_BOMB_RANGE).toFixed(1)}`);
+      console.log(`🚀 ${snailId.toUpperCase()} DEPLOYED BOMB at x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)} → will travel to x:${(bombPosition.x + OOZE_BOMB_RANGE).toFixed(1)} (cooldown: ${BOMB_COOLDOWN_TIME}s)`);
       
       // Play sound effect
       const { playHit } = useAudio.getState();
