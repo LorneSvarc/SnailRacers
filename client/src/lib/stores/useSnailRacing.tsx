@@ -86,6 +86,16 @@ export const useSnailRacing = create<SnailRacingState>()(
         boostTimer: 0,
       }));
       
+      // Create a test AI bomb to verify rendering
+      const testBomb: OozeBomb = {
+        id: "test-ai-bomb",
+        snailId: "ai-0",
+        position: new THREE.Vector3(-20, 0.4, -2.5),
+        startPosition: new THREE.Vector3(-25, 0.4, -2.5),
+        active: false,
+        timer: 10.0,
+      };
+
       set({
         gameState: "waiting",
         raceTime: 0,
@@ -99,10 +109,12 @@ export const useSnailRacing = create<SnailRacingState>()(
           boostTimer: 0,
         },
         aiSnails,
-        oozeBombs: [],
+        oozeBombs: [testBomb], // Start with one test bomb
         oozeTrails: [],
         playerPosition: 1,
       });
+      
+      console.log("🧪 Game initialized with test AI bomb - should be visible on track");
     },
     
     updateGame: (delta: number) => {
@@ -154,10 +166,10 @@ export const useSnailRacing = create<SnailRacingState>()(
         }).filter(Boolean) as OozeBomb[];
         
         // Debug: Log how many bombs remain after update
-        console.log(`🎯 After update: ${updatedOozeBombs.length} bombs remaining (started with ${state.oozeBombs.length})`);
+        console.log(`🎯 After update: ${updatedOozeBombs.length} bombs remaining (started with ${currentState.oozeBombs.length})`);
         
         // Update ooze trails
-        const updatedOozeTrails = state.oozeTrails.map(trail => {
+        const updatedOozeTrails = currentState.oozeTrails.map(trail => {
           const newTimer = trail.timer - delta;
           if (newTimer <= 0) {
             return null; // Remove trail
@@ -166,7 +178,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         }).filter(Boolean) as OozeTrail[];
         
         // Update player snail - only boost timer (collision handled in movement)
-        let updatedPlayerSnail = state.playerSnail;
+        let updatedPlayerSnail = currentState.playerSnail;
         if (updatedPlayerSnail && updatedPlayerSnail.boostTimer > 0) {
           const newTimer = updatedPlayerSnail.boostTimer - delta;
           updatedPlayerSnail = {
