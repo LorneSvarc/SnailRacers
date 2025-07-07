@@ -13,19 +13,23 @@ export default function OozeBomb({ position, active }: OozeBombProps) {
   
   // Create ooze bomb geometry
   const oozeBombGeometry = useMemo(() => {
-    const geometry = new THREE.SphereGeometry(0.2, 12, 8);
+    const geometry = new THREE.SphereGeometry(0.3, 12, 8);
     const material = new THREE.MeshLambertMaterial({ 
       color: "#32CD32",
       transparent: true,
-      opacity: active ? 0.8 : 0.3
+      opacity: active ? 0.9 : 0.7,
+      emissive: "#228B22",
+      emissiveIntensity: active ? 0.3 : 0.1
     });
     return { geometry, material };
   }, [active]);
 
   // Pulsing animation
   useFrame((state) => {
-    if (groupRef.current && active) {
-      const scale = 1 + Math.sin(state.clock.elapsedTime * 4) * 0.2;
+    if (groupRef.current) {
+      const scale = active ? 
+        1 + Math.sin(state.clock.elapsedTime * 4) * 0.3 : 
+        1 + Math.sin(state.clock.elapsedTime * 2) * 0.1;
       groupRef.current.scale.setScalar(scale);
     }
   });

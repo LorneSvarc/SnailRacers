@@ -53,8 +53,8 @@ const TRACK_LENGTH = 56; // Distance from start to finish
 const FINISH_LINE_X = 28;
 const SNAIL_BASE_SPEED = 0.5; // Very slow base speed
 const SNAIL_BOOST_SPEED = 2.0; // Speed when boosted
-const OOZE_BOMB_TRAVEL_SPEED = 4.0;
-const OOZE_BOMB_RANGE = 8.0;
+const OOZE_BOMB_TRAVEL_SPEED = 8.0;
+const OOZE_BOMB_RANGE = 4.0;
 
 export const useSnailRacing = create<SnailRacingState>()(
   subscribeWithSelector((set, get) => ({
@@ -265,11 +265,16 @@ export const useSnailRacing = create<SnailRacingState>()(
       
       if (!snail) return;
       
+      // Deploy bomb slightly ahead of the snail
+      const bombPosition = snail.position.clone();
+      bombPosition.x += 1.0; // Start 1 unit ahead
+      bombPosition.y += 0.5; // Slightly above ground for visibility
+      
       const newBomb: OozeBomb = {
         id: `${snailId}-${Date.now()}`,
         snailId,
-        position: snail.position.clone(),
-        startPosition: snail.position.clone(),
+        position: bombPosition,
+        startPosition: bombPosition,
         active: false,
         timer: 10.0, // 10 seconds active time
       };
