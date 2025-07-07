@@ -105,14 +105,20 @@ export default function SnailRacing() {
         />
       ))}
       
-      {/* All ooze bombs */}
-      {oozeBombs.map((bomb, index) => (
-        <OozeBomb
-          key={`${bomb.id}`}
-          position={[bomb.position.x, bomb.position.y, bomb.position.z]}
-          active={bomb.active}
-        />
-      ))}
+      {/* All ooze bombs - debug render */}
+      {oozeBombs.map((bomb, index) => {
+        // Debug log for rendering
+        if (index === 0) {
+          console.log('Rendering', oozeBombs.length, 'bombs');
+        }
+        return (
+          <OozeBomb
+            key={`${bomb.id}`}
+            position={[bomb.position.x, bomb.position.y, bomb.position.z]}
+            active={bomb.active}
+          />
+        );
+      })}
       
 
     </>

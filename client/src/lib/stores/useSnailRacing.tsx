@@ -227,12 +227,12 @@ export const useSnailRacing = create<SnailRacingState>()(
           
           updatedSnail.position = newPosition;
           
-          // Strategic bomb deployment - much more aggressive
+          // Strategic bomb deployment - more reasonable frequency
           const shouldDeployBomb = 
-            Math.random() < 0.01 || // 1% chance per frame (very high)
-            (newPosition.x > -10 && Math.random() < 0.02) || // 2% chance after midway
-            (updatedSnail.boosted && Math.random() < 0.03) || // 3% chance when boosted
-            (nearestActiveBomb && nearestActiveBomb.distance < 3 && Math.random() < 0.05); // 5% chance when close to other bombs
+            Math.random() < 0.002 || // 0.2% chance per frame (reasonable)
+            (newPosition.x > -10 && Math.random() < 0.005) || // 0.5% chance after midway
+            (updatedSnail.boosted && Math.random() < 0.008) || // 0.8% chance when boosted
+            (nearestActiveBomb && nearestActiveBomb.distance < 5 && Math.random() < 0.01); // 1% chance when near other bombs
           
           if (shouldDeployBomb) {
             get().deployOozeBomb(`ai-${index}`);
@@ -293,13 +293,13 @@ export const useSnailRacing = create<SnailRacingState>()(
       
       // Deploy bomb at the snail's shell position
       const bombPosition = snail.position.clone();
-      bombPosition.y += 0.4; // At shell height
+      bombPosition.y = 0.4; // At shell height
       
       const newBomb: OozeBomb = {
         id: `${snailId}-${Date.now()}`,
         snailId,
         position: bombPosition,
-        startPosition: bombPosition,
+        startPosition: bombPosition.clone(),
         active: false,
         timer: 10.0, // 10 seconds active time
       };
@@ -308,9 +308,13 @@ export const useSnailRacing = create<SnailRacingState>()(
         oozeBombs: [...state.oozeBombs, newBomb],
       });
       
-      // Debug log
-      console.log('Deployed ooze bomb:', newBomb);
-      console.log('Bomb deployed by:', snailId);
+      // Debug log with better info
+      console.log('🎯 BOMB DEPLOYED:', {
+        id: newBomb.id,
+        snailId: snailId,
+        position: `x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)}`,
+        totalBombs: state.oozeBombs.length + 1
+      });
       
       // Play sound effect
       const { playHit } = useAudio.getState();
