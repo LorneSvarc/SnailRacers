@@ -319,6 +319,9 @@ export const useSnailRacing = create<SnailRacingState>()(
         oozeBombs: [...state.oozeBombs, newBomb],
       });
       
+      // Debug: Check if bomb was actually added
+      console.log(`💣 Bomb added to state. Total bombs: ${get().oozeBombs.length}`);
+      
       // Debug log bomb deployment
       console.log(`🚀 ${snailId.toUpperCase()} DEPLOYED BOMB at x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)} → will travel to x:${(bombPosition.x + OOZE_BOMB_RANGE).toFixed(1)}`);
       
