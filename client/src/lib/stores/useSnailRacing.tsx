@@ -21,6 +21,7 @@ interface OozeBomb {
   id: string;
   snailId: string;
   position: THREE.Vector3;
+  startPosition: THREE.Vector3;
   active: boolean;
   timer: number;
 }
@@ -121,8 +122,9 @@ export const useSnailRacing = create<SnailRacingState>()(
             const newPosition = bomb.position.clone();
             newPosition.x += OOZE_BOMB_TRAVEL_SPEED * delta;
             
-            // Check if bomb should activate
-            if (newPosition.x >= bomb.position.x + OOZE_BOMB_RANGE) {
+            // Check if bomb should activate (traveled the specified range)
+            const distanceTraveled = newPosition.x - bomb.startPosition.x;
+            if (distanceTraveled >= OOZE_BOMB_RANGE) {
               return { ...bomb, active: true, position: newPosition };
             }
             
@@ -267,6 +269,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         id: `${snailId}-${Date.now()}`,
         snailId,
         position: snail.position.clone(),
+        startPosition: snail.position.clone(),
         active: false,
         timer: 10.0, // 10 seconds active time
       };
