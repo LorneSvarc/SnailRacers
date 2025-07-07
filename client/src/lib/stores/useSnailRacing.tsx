@@ -118,16 +118,23 @@ export const useSnailRacing = create<SnailRacingState>()(
         // Update race time
         set({ raceTime: state.raceTime + delta });
         
-        // Update ooze bombs
+        // Update ooze bombs - with debug logging
         const updatedOozeBombs = state.oozeBombs.map(bomb => {
           if (!bomb.active) {
             // Move bomb forward
             const newPosition = bomb.position.clone();
+            const oldX = newPosition.x;
             newPosition.x += OOZE_BOMB_TRAVEL_SPEED * delta;
+            
+            // Debug: Log bomb movement
+            if (bomb.snailId.startsWith('ai-')) {
+              console.log(`🚀 AI bomb ${bomb.id} moving: ${oldX.toFixed(1)} → ${newPosition.x.toFixed(1)} (speed: ${OOZE_BOMB_TRAVEL_SPEED})`);
+            }
             
             // Check if bomb should activate (traveled the specified range)
             const distanceTraveled = newPosition.x - bomb.startPosition.x;
             if (distanceTraveled >= OOZE_BOMB_RANGE) {
+              console.log(`💥 Bomb ${bomb.id} activated at x:${newPosition.x.toFixed(1)}`);
               return { ...bomb, active: true, position: newPosition };
             }
             
@@ -136,6 +143,7 @@ export const useSnailRacing = create<SnailRacingState>()(
             // Bomb is active, decrease timer
             const newTimer = bomb.timer - delta;
             if (newTimer <= 0) {
+              console.log(`⚰️ Bomb ${bomb.id} expired and removed`);
               return null; // Remove bomb
             }
             return { ...bomb, timer: newTimer };
@@ -308,14 +316,8 @@ export const useSnailRacing = create<SnailRacingState>()(
         oozeBombs: [...state.oozeBombs, newBomb],
       });
       
-      // Debug log with clear positioning
-      console.log('🚀 BOMB LAUNCHED:', {
-        id: newBomb.id,
-        snailId: snailId,
-        from: `x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)}`,
-        snailAt: `x:${snail.position.x.toFixed(1)}, z:${snail.position.z.toFixed(1)}`,
-        willTravelTo: `x:${(bombPosition.x + OOZE_BOMB_RANGE).toFixed(1)}`
-      });
+      // Debug log bomb deployment
+      console.log(`🚀 ${snailId.toUpperCase()} DEPLOYED BOMB at x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)} → will travel to x:${(bombPosition.x + OOZE_BOMB_RANGE).toFixed(1)}`);
       
       // Play sound effect
       const { playHit } = useAudio.getState();

@@ -107,7 +107,6 @@ export default function SnailRacing() {
       
       {/* All ooze bombs */}
       {oozeBombs.map((bomb, index) => {
-        console.log(`Rendering bomb ${bomb.id} at position x:${bomb.position.x.toFixed(1)}, z:${bomb.position.z.toFixed(1)}, active:${bomb.active}`);
         return (
           <OozeBomb
             key={`${bomb.id}`}
