@@ -39,7 +39,7 @@ export default function RaceTrack() {
       </mesh>
       
       {/* Lane dividers */}
-      {[-1.5, 0, 1.5].map((z, index) => (
+      {[-1, 0.5, 1.5].map((z, index) => (
         <mesh key={index} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, z]}>
           <planeGeometry args={[60, 0.2]} />
           <meshBasicMaterial color="#FFFFFF" />

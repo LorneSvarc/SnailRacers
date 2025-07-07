@@ -53,6 +53,7 @@ const TRACK_LENGTH = 56; // Distance from start to finish
 const FINISH_LINE_X = 28;
 const SNAIL_BASE_SPEED = 0.5; // Very slow base speed
 const SNAIL_BOOST_SPEED = 2.0; // Speed when boosted
+const BOOST_DURATION = 4.0; // 4 seconds boost duration
 const OOZE_BOMB_TRAVEL_SPEED = 8.0;
 const OOZE_BOMB_RANGE = 4.0;
 
@@ -74,7 +75,7 @@ export const useSnailRacing = create<SnailRacingState>()(
       ];
       
       const aiSnails = aiColors.map((colorData, index) => ({
-        position: new THREE.Vector3(-28, 0, -1.5 + index * 1.5),
+        position: new THREE.Vector3(-28, 0, -2.5 + index * 1.5), // Start at -2.5, -1, 0.5
         rotation: 0,
         speed: SNAIL_BASE_SPEED * (0.8 + Math.random() * 0.4), // Slight speed variation
         color: colorData.color,
@@ -87,7 +88,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         gameState: "waiting",
         raceTime: 0,
         playerSnail: {
-          position: new THREE.Vector3(-28, 0, 1.5),
+          position: new THREE.Vector3(-28, 0, 2), // Player at lane 2
           rotation: 0,
           speed: SNAIL_BASE_SPEED,
           color: "#FF6B6B",
@@ -151,20 +152,25 @@ export const useSnailRacing = create<SnailRacingState>()(
         // Update player snail
         let updatedPlayerSnail = state.playerSnail;
         if (updatedPlayerSnail) {
-          // Check for boost from ooze bombs
+          // Check for collision with any active ooze bomb
           const nearbyOozeBomb = updatedOozeBombs.find(bomb => 
             bomb.active && 
-            bomb.snailId === 'player' &&
-            Math.abs(bomb.position.x - updatedPlayerSnail!.position.x) < 1.5 &&
-            Math.abs(bomb.position.z - updatedPlayerSnail!.position.z) < 1.5
+            Math.abs(bomb.position.x - updatedPlayerSnail!.position.x) < 1.0 &&
+            Math.abs(bomb.position.z - updatedPlayerSnail!.position.z) < 1.0
           );
           
           if (nearbyOozeBomb) {
             updatedPlayerSnail = {
               ...updatedPlayerSnail,
               boosted: true,
-              boostTimer: 3.0, // 3 seconds of boost
+              boostTimer: BOOST_DURATION,
             };
+            
+            // Remove the bomb after collision
+            const bombIndex = updatedOozeBombs.indexOf(nearbyOozeBomb);
+            if (bombIndex > -1) {
+              updatedOozeBombs.splice(bombIndex, 1);
+            }
           }
           
           // Update boost timer
@@ -186,17 +192,22 @@ export const useSnailRacing = create<SnailRacingState>()(
           const currentSpeed = snail.boosted ? SNAIL_BOOST_SPEED : snail.speed;
           newPosition.x += currentSpeed * delta;
           
-          // Check for boost from ooze bombs
+          // Check for collision with any active ooze bomb
           const nearbyOozeBomb = updatedOozeBombs.find(bomb => 
             bomb.active && 
-            bomb.snailId === `ai-${index}` &&
-            Math.abs(bomb.position.x - newPosition.x) < 1.5 &&
-            Math.abs(bomb.position.z - newPosition.z) < 1.5
+            Math.abs(bomb.position.x - newPosition.x) < 1.0 &&
+            Math.abs(bomb.position.z - newPosition.z) < 1.0
           );
           
           if (nearbyOozeBomb) {
             updatedSnail.boosted = true;
-            updatedSnail.boostTimer = 3.0;
+            updatedSnail.boostTimer = BOOST_DURATION;
+            
+            // Remove the bomb after collision
+            const bombIndex = updatedOozeBombs.indexOf(nearbyOozeBomb);
+            if (bombIndex > -1) {
+              updatedOozeBombs.splice(bombIndex, 1);
+            }
           }
           
           // Update boost timer
