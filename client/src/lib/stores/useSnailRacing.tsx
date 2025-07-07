@@ -316,7 +316,12 @@ export function useSnailRacingControls() {
       let moved = false;
       
       const newPosition = playerSnail.position.clone();
-      const currentSpeed = playerSnail.boosted ? SNAIL_BOOST_SPEED : playerSnail.speed;
+      const currentSpeed = playerSnail.boosted ? SNAIL_BOOST_SPEED : SNAIL_BASE_SPEED;
+      
+      // Debug logging
+      if (playerSnail.boosted) {
+        console.log('Player is boosted! Speed:', currentSpeed, 'Timer:', playerSnail.boostTimer);
+      }
       
       if (keys.forward) {
         newPosition.x += currentSpeed * 0.016; // Assuming 60fps
@@ -346,6 +351,7 @@ export function useSnailRacingControls() {
         
         useSnailRacing.setState(state => {
           let updatedPlayerSnail = { ...state.playerSnail!, position: newPosition };
+          let newOozeBombs = state.oozeBombs;
           
           // Check for bomb collisions immediately after movement
           const nearbyBomb = state.oozeBombs.find(bomb => 
@@ -362,19 +368,15 @@ export function useSnailRacingControls() {
             };
             
             // Remove the bomb
-            const newBombs = state.oozeBombs.filter(bomb => bomb.id !== nearbyBomb.id);
+            newOozeBombs = state.oozeBombs.filter(bomb => bomb.id !== nearbyBomb.id);
             console.log('Player hit bomb! Boost activated for', BOOST_DURATION, 'seconds');
-            
-            return {
-              playerSnail: updatedPlayerSnail,
-              oozeTrails: [...state.oozeTrails, newTrail],
-              oozeBombs: newBombs,
-            };
+            console.log('Updated player snail:', updatedPlayerSnail);
           }
           
           return {
             playerSnail: updatedPlayerSnail,
             oozeTrails: [...state.oozeTrails, newTrail],
+            oozeBombs: newOozeBombs,
           };
         });
       }
