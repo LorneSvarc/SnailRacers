@@ -11,14 +11,15 @@ interface OozeBombProps {
 export default function OozeBomb({ position, active }: OozeBombProps) {
   const groupRef = useRef<THREE.Group>(null);
   
-  // Create ooze bomb geometry - super visible
+  // Create ooze bomb geometry - back to normal but visible
   const oozeBombGeometry = useMemo(() => {
-    const geometry = new THREE.SphereGeometry(0.6, 16, 12); // Even bigger
+    const geometry = new THREE.SphereGeometry(0.3, 12, 8);
     const material = new THREE.MeshLambertMaterial({ 
-      color: active ? "#FFFF00" : "#FF6600", // Yellow when active, orange when traveling  
-      transparent: false, // No transparency for maximum visibility
-      emissive: active ? "#FFFF00" : "#FF6600",
-      emissiveIntensity: 0.8 // Very bright
+      color: active ? "#FFFF00" : "#32CD32", // Yellow when active, green when traveling  
+      transparent: true,
+      opacity: active ? 0.9 : 0.7,
+      emissive: active ? "#FFFF00" : "#228B22",
+      emissiveIntensity: active ? 0.3 : 0.1
     });
     return { geometry, material };
   }, [active]);

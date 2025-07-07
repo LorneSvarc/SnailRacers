@@ -105,8 +105,9 @@ export default function SnailRacing() {
         />
       ))}
       
-      {/* All ooze bombs - super visible */}
+      {/* All ooze bombs */}
       {oozeBombs.map((bomb, index) => {
+        console.log(`Rendering bomb ${bomb.id} at position x:${bomb.position.x.toFixed(1)}, z:${bomb.position.z.toFixed(1)}, active:${bomb.active}`);
         return (
           <OozeBomb
             key={`${bomb.id}`}
@@ -115,12 +116,6 @@ export default function SnailRacing() {
           />
         );
       })}
-      
-      {/* Debug sphere to test visibility */}
-      <mesh position={[0, 2, 0]}>
-        <sphereGeometry args={[1, 16, 12]} />
-        <meshBasicMaterial color="#FF0000" />
-      </mesh>
       
 
     </>

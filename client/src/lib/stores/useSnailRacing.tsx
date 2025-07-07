@@ -291,9 +291,8 @@ export const useSnailRacing = create<SnailRacingState>()(
       
       if (!snail) return;
       
-      // Deploy bomb FROM the snail's shell position (slightly behind shell)
+      // Deploy bomb FROM the snail's shell position 
       const bombPosition = snail.position.clone();
-      bombPosition.x -= 0.5; // Start slightly behind snail so it shoots forward
       bombPosition.y = 0.4; // At shell height
       
       const newBomb: OozeBomb = {
