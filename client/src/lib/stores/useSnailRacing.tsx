@@ -152,6 +152,16 @@ export const useSnailRacing = create<SnailRacingState>()(
         // Update player snail
         let updatedPlayerSnail = state.playerSnail;
         if (updatedPlayerSnail) {
+          // Update boost timer first
+          if (updatedPlayerSnail.boostTimer > 0) {
+            const newTimer = updatedPlayerSnail.boostTimer - delta;
+            updatedPlayerSnail = {
+              ...updatedPlayerSnail,
+              boostTimer: Math.max(0, newTimer),
+              boosted: newTimer > 0,
+            };
+          }
+          
           // Check for collision with any active ooze bomb
           const nearbyOozeBomb = updatedOozeBombs.find(bomb => 
             bomb.active && 
@@ -172,20 +182,18 @@ export const useSnailRacing = create<SnailRacingState>()(
               updatedOozeBombs.splice(bombIndex, 1);
             }
           }
-          
-          // Update boost timer
-          if (updatedPlayerSnail.boostTimer > 0) {
-            updatedPlayerSnail = {
-              ...updatedPlayerSnail,
-              boostTimer: updatedPlayerSnail.boostTimer - delta,
-              boosted: updatedPlayerSnail.boostTimer > 0,
-            };
-          }
         }
         
         // Update AI snails
         const updatedAiSnails = state.aiSnails.map((snail, index) => {
           let updatedSnail = { ...snail };
+          
+          // Update boost timer first
+          if (updatedSnail.boostTimer > 0) {
+            const newTimer = updatedSnail.boostTimer - delta;
+            updatedSnail.boostTimer = Math.max(0, newTimer);
+            updatedSnail.boosted = newTimer > 0;
+          }
           
           // Simple AI: move forward with occasional ooze bomb deployment
           const newPosition = snail.position.clone();
@@ -210,17 +218,11 @@ export const useSnailRacing = create<SnailRacingState>()(
             }
           }
           
-          // Update boost timer
-          if (updatedSnail.boostTimer > 0) {
-            updatedSnail.boostTimer -= delta;
-            updatedSnail.boosted = updatedSnail.boostTimer > 0;
-          }
-          
           updatedSnail.position = newPosition;
           
           // AI deployment of ooze bombs (random chance)
           if (Math.random() < 0.001) { // Very low chance per frame
-            get().deployOozeBomb(`ai-${index}`);
+          get().deployOozeBomb(`ai-${index}`);
           }
           
           return updatedSnail;
