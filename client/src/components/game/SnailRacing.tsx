@@ -105,12 +105,8 @@ export default function SnailRacing() {
         />
       ))}
       
-      {/* All ooze bombs - debug render */}
+      {/* All ooze bombs - super visible */}
       {oozeBombs.map((bomb, index) => {
-        // Debug log for rendering
-        if (index === 0) {
-          console.log('Rendering', oozeBombs.length, 'bombs');
-        }
         return (
           <OozeBomb
             key={`${bomb.id}`}
@@ -119,6 +115,12 @@ export default function SnailRacing() {
           />
         );
       })}
+      
+      {/* Debug sphere to test visibility */}
+      <mesh position={[0, 2, 0]}>
+        <sphereGeometry args={[1, 16, 12]} />
+        <meshBasicMaterial color="#FF0000" />
+      </mesh>
       
 
     </>

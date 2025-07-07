@@ -291,8 +291,9 @@ export const useSnailRacing = create<SnailRacingState>()(
       
       if (!snail) return;
       
-      // Deploy bomb at the snail's shell position
+      // Deploy bomb FROM the snail's shell position (slightly behind shell)
       const bombPosition = snail.position.clone();
+      bombPosition.x -= 0.5; // Start slightly behind snail so it shoots forward
       bombPosition.y = 0.4; // At shell height
       
       const newBomb: OozeBomb = {
@@ -308,12 +309,13 @@ export const useSnailRacing = create<SnailRacingState>()(
         oozeBombs: [...state.oozeBombs, newBomb],
       });
       
-      // Debug log with better info
-      console.log('🎯 BOMB DEPLOYED:', {
+      // Debug log with clear positioning
+      console.log('🚀 BOMB LAUNCHED:', {
         id: newBomb.id,
         snailId: snailId,
-        position: `x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)}`,
-        totalBombs: state.oozeBombs.length + 1
+        from: `x:${bombPosition.x.toFixed(1)}, z:${bombPosition.z.toFixed(1)}`,
+        snailAt: `x:${snail.position.x.toFixed(1)}, z:${snail.position.z.toFixed(1)}`,
+        willTravelTo: `x:${(bombPosition.x + OOZE_BOMB_RANGE).toFixed(1)}`
       });
       
       // Play sound effect
