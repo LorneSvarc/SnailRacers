@@ -11,15 +11,15 @@ import { useAudio } from "../../lib/stores/useAudio";
 
 export default function SnailRacing() {
   const cameraRef = useRef<THREE.Camera>(null);
-  const { 
-    gameState, 
-    playerSnail, 
-    aiSnails, 
-    oozeBombs,
-    initializeGame, 
-    updateGame,
-    resetGame 
-  } = useSnailRacing();
+  // Get state with explicit selectors to ensure reactivity
+  const gameState = useSnailRacing((state) => state.gameState);
+  const playerSnail = useSnailRacing((state) => state.playerSnail);
+  const aiSnails = useSnailRacing((state) => state.aiSnails);
+  const oozeBombs = useSnailRacing((state) => state.oozeBombs);
+  const oozeTrails = useSnailRacing((state) => state.oozeTrails);
+  const initializeGame = useSnailRacing((state) => state.initializeGame);
+  const updateGame = useSnailRacing((state) => state.updateGame);
+  const resetGame = useSnailRacing((state) => state.resetGame);
   
   const { backgroundMusic, setBackgroundMusic } = useAudio();
 
@@ -43,9 +43,9 @@ export default function SnailRacing() {
 
   // Game loop
   useFrame((state, delta) => {
-    // Debug: Log that the game loop is running (less frequently)
-    if (Math.random() < 0.01) { // Only log 1% of the time
-      console.log(`🔄 Game loop running, delta: ${delta.toFixed(3)}, bombs count: ${oozeBombs.length}`);
+    // Debug: Log bomb count every few frames
+    if (Math.random() < 0.05) { // 5% of the time
+      console.log(`🔄 Component sees ${oozeBombs.length} bombs in state`);
     }
     updateGame(delta);
     

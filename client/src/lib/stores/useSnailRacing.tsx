@@ -153,6 +153,9 @@ export const useSnailRacing = create<SnailRacingState>()(
           }
         }).filter(Boolean) as OozeBomb[];
         
+        // Debug: Log how many bombs remain after update
+        console.log(`🎯 After update: ${updatedOozeBombs.length} bombs remaining (started with ${state.oozeBombs.length})`);
+        
         // Update ooze trails
         const updatedOozeTrails = state.oozeTrails.map(trail => {
           const newTimer = trail.timer - delta;
