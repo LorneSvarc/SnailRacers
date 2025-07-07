@@ -149,7 +149,7 @@ export const useSnailRacing = create<SnailRacingState>()(
           return { ...trail, timer: newTimer };
         }).filter(Boolean) as OozeTrail[];
         
-        // Update player snail boost timer only
+        // Update player snail - only boost timer (collision handled in movement)
         let updatedPlayerSnail = state.playerSnail;
         if (updatedPlayerSnail && updatedPlayerSnail.boostTimer > 0) {
           const newTimer = updatedPlayerSnail.boostTimer - delta;
@@ -310,18 +310,14 @@ export function useSnailRacingControls() {
   // Handle continuous movement
   useEffect(() => {
     const handleMovement = () => {
-      if (gameState !== "racing" || !playerSnail) return;
+      const state = useSnailRacing.getState();
+      if (state.gameState !== "racing" || !state.playerSnail) return;
       
       const keys = getKeys();
       let moved = false;
       
-      const newPosition = playerSnail.position.clone();
-      const currentSpeed = playerSnail.boosted ? SNAIL_BOOST_SPEED : SNAIL_BASE_SPEED;
-      
-      // Debug logging
-      if (playerSnail.boosted) {
-        console.log('Player is boosted! Speed:', currentSpeed, 'Timer:', playerSnail.boostTimer);
-      }
+      const newPosition = state.playerSnail.position.clone();
+      const currentSpeed = state.playerSnail.boosted ? SNAIL_BOOST_SPEED : SNAIL_BASE_SPEED;
       
       if (keys.forward) {
         newPosition.x += currentSpeed * 0.016; // Assuming 60fps
@@ -345,37 +341,42 @@ export function useSnailRacingControls() {
         const newTrail: OozeTrail = {
           id: `player-trail-${Date.now()}`,
           snailId: 'player',
-          position: playerSnail.position.clone(),
+          position: state.playerSnail.position.clone(),
           timer: 2.0,
         };
         
-        useSnailRacing.setState(state => {
-          let updatedPlayerSnail = { ...state.playerSnail!, position: newPosition };
-          let newOozeBombs = state.oozeBombs;
+        useSnailRacing.setState(currentState => {
+          let updatedPlayerSnail = currentState.playerSnail ? {
+            ...currentState.playerSnail,
+            position: newPosition,
+          } : null;
           
-          // Check for bomb collisions immediately after movement
-          const nearbyBomb = state.oozeBombs.find(bomb => 
-            bomb.active && 
-            Math.abs(bomb.position.x - newPosition.x) < 1.0 &&
-            Math.abs(bomb.position.z - newPosition.z) < 1.0
-          );
+          let newOozeBombs = currentState.oozeBombs;
           
-          if (nearbyBomb) {
-            updatedPlayerSnail = {
-              ...updatedPlayerSnail,
-              boosted: true,
-              boostTimer: BOOST_DURATION,
-            };
+          // Check for collision with any active ooze bomb
+          if (updatedPlayerSnail) {
+            const nearbyBomb = currentState.oozeBombs.find(bomb => 
+              bomb.active && 
+              Math.abs(bomb.position.x - newPosition.x) < 1.0 &&
+              Math.abs(bomb.position.z - newPosition.z) < 1.0
+            );
             
-            // Remove the bomb
-            newOozeBombs = state.oozeBombs.filter(bomb => bomb.id !== nearbyBomb.id);
-            console.log('Player hit bomb! Boost activated for', BOOST_DURATION, 'seconds');
-            console.log('Updated player snail:', updatedPlayerSnail);
+            if (nearbyBomb) {
+              updatedPlayerSnail = {
+                ...updatedPlayerSnail,
+                boosted: true,
+                boostTimer: BOOST_DURATION,
+              };
+              
+              // Remove the bomb
+              newOozeBombs = currentState.oozeBombs.filter(bomb => bomb.id !== nearbyBomb.id);
+              console.log('Player hit bomb! Boost activated for', BOOST_DURATION, 'seconds');
+            }
           }
           
           return {
             playerSnail: updatedPlayerSnail,
-            oozeTrails: [...state.oozeTrails, newTrail],
+            oozeTrails: [...currentState.oozeTrails, newTrail],
             oozeBombs: newOozeBombs,
           };
         });
@@ -384,5 +385,5 @@ export function useSnailRacingControls() {
     
     const interval = setInterval(handleMovement, 16); // ~60fps
     return () => clearInterval(interval);
-  }, [gameState, playerSnail, getKeys]);
+  }, [getKeys]);
 }
