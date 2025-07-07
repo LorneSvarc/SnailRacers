@@ -227,11 +227,12 @@ export const useSnailRacing = create<SnailRacingState>()(
           
           updatedSnail.position = newPosition;
           
-          // Strategic bomb deployment
+          // Strategic bomb deployment - much more aggressive
           const shouldDeployBomb = 
-            Math.random() < 0.003 || // Random chance (higher than before)
-            (newPosition.x > 0 && Math.random() < 0.008) || // More likely in the second half
-            (updatedSnail.boosted && Math.random() < 0.01); // More likely when boosted
+            Math.random() < 0.01 || // 1% chance per frame (very high)
+            (newPosition.x > -10 && Math.random() < 0.02) || // 2% chance after midway
+            (updatedSnail.boosted && Math.random() < 0.03) || // 3% chance when boosted
+            (nearestActiveBomb && nearestActiveBomb.distance < 3 && Math.random() < 0.05); // 5% chance when close to other bombs
           
           if (shouldDeployBomb) {
             get().deployOozeBomb(`ai-${index}`);
@@ -309,6 +310,7 @@ export const useSnailRacing = create<SnailRacingState>()(
       
       // Debug log
       console.log('Deployed ooze bomb:', newBomb);
+      console.log('Bomb deployed by:', snailId);
       
       // Play sound effect
       const { playHit } = useAudio.getState();
