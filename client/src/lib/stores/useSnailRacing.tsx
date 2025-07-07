@@ -126,9 +126,12 @@ export const useSnailRacing = create<SnailRacingState>()(
             const oldX = newPosition.x;
             newPosition.x += OOZE_BOMB_TRAVEL_SPEED * delta;
             
-            // Debug: Log bomb movement
+            // Debug: Log bomb movement for ALL bombs
+            console.log(`🚀 Bomb ${bomb.id} moving: ${oldX.toFixed(1)} → ${newPosition.x.toFixed(1)} (delta: ${delta.toFixed(3)}, speed: ${OOZE_BOMB_TRAVEL_SPEED})`);
+            
+            // Extra debug for AI bombs
             if (bomb.snailId.startsWith('ai-')) {
-              console.log(`🚀 AI bomb ${bomb.id} moving: ${oldX.toFixed(1)} → ${newPosition.x.toFixed(1)} (speed: ${OOZE_BOMB_TRAVEL_SPEED})`);
+              console.log(`   AI bomb details: start=${bomb.startPosition.x.toFixed(1)}, current=${newPosition.x.toFixed(1)}, traveled=${(newPosition.x - bomb.startPosition.x).toFixed(1)}`);
             }
             
             // Check if bomb should activate (traveled the specified range)
