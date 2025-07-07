@@ -149,46 +149,22 @@ export const useSnailRacing = create<SnailRacingState>()(
           return { ...trail, timer: newTimer };
         }).filter(Boolean) as OozeTrail[];
         
-        // Update player snail
+        // Update player snail boost timer only
         let updatedPlayerSnail = state.playerSnail;
-        if (updatedPlayerSnail) {
-          // Update boost timer first
-          if (updatedPlayerSnail.boostTimer > 0) {
-            const newTimer = updatedPlayerSnail.boostTimer - delta;
-            updatedPlayerSnail = {
-              ...updatedPlayerSnail,
-              boostTimer: Math.max(0, newTimer),
-              boosted: newTimer > 0,
-            };
-          }
-          
-          // Check for collision with any active ooze bomb
-          const nearbyOozeBomb = updatedOozeBombs.find(bomb => 
-            bomb.active && 
-            Math.abs(bomb.position.x - updatedPlayerSnail!.position.x) < 1.0 &&
-            Math.abs(bomb.position.z - updatedPlayerSnail!.position.z) < 1.0
-          );
-          
-          if (nearbyOozeBomb) {
-            updatedPlayerSnail = {
-              ...updatedPlayerSnail,
-              boosted: true,
-              boostTimer: BOOST_DURATION,
-            };
-            
-            // Remove the bomb after collision
-            const bombIndex = updatedOozeBombs.indexOf(nearbyOozeBomb);
-            if (bombIndex > -1) {
-              updatedOozeBombs.splice(bombIndex, 1);
-            }
-          }
+        if (updatedPlayerSnail && updatedPlayerSnail.boostTimer > 0) {
+          const newTimer = updatedPlayerSnail.boostTimer - delta;
+          updatedPlayerSnail = {
+            ...updatedPlayerSnail,
+            boostTimer: Math.max(0, newTimer),
+            boosted: newTimer > 0,
+          };
         }
         
         // Update AI snails
         const updatedAiSnails = state.aiSnails.map((snail, index) => {
           let updatedSnail = { ...snail };
           
-          // Update boost timer first
+          // Update boost timer
           if (updatedSnail.boostTimer > 0) {
             const newTimer = updatedSnail.boostTimer - delta;
             updatedSnail.boostTimer = Math.max(0, newTimer);
@@ -222,7 +198,7 @@ export const useSnailRacing = create<SnailRacingState>()(
           
           // AI deployment of ooze bombs (random chance)
           if (Math.random() < 0.001) { // Very low chance per frame
-          get().deployOozeBomb(`ai-${index}`);
+            get().deployOozeBomb(`ai-${index}`);
           }
           
           return updatedSnail;
@@ -368,10 +344,39 @@ export function useSnailRacingControls() {
           timer: 2.0,
         };
         
-        useSnailRacing.setState(state => ({
-          playerSnail: { ...state.playerSnail!, position: newPosition },
-          oozeTrails: [...state.oozeTrails, newTrail],
-        }));
+        useSnailRacing.setState(state => {
+          let updatedPlayerSnail = { ...state.playerSnail!, position: newPosition };
+          
+          // Check for bomb collisions immediately after movement
+          const nearbyBomb = state.oozeBombs.find(bomb => 
+            bomb.active && 
+            Math.abs(bomb.position.x - newPosition.x) < 1.0 &&
+            Math.abs(bomb.position.z - newPosition.z) < 1.0
+          );
+          
+          if (nearbyBomb) {
+            updatedPlayerSnail = {
+              ...updatedPlayerSnail,
+              boosted: true,
+              boostTimer: BOOST_DURATION,
+            };
+            
+            // Remove the bomb
+            const newBombs = state.oozeBombs.filter(bomb => bomb.id !== nearbyBomb.id);
+            console.log('Player hit bomb! Boost activated for', BOOST_DURATION, 'seconds');
+            
+            return {
+              playerSnail: updatedPlayerSnail,
+              oozeTrails: [...state.oozeTrails, newTrail],
+              oozeBombs: newBombs,
+            };
+          }
+          
+          return {
+            playerSnail: updatedPlayerSnail,
+            oozeTrails: [...state.oozeTrails, newTrail],
+          };
+        });
       }
     };
     
