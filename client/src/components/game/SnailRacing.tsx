@@ -43,6 +43,8 @@ export default function SnailRacing() {
 
   // Game loop
   useFrame((state, delta) => {
+    // Debug: Log that the game loop is running
+    console.log(`🔄 Game loop running, delta: ${delta.toFixed(3)}, bombs count: ${oozeBombs.length}`);
     updateGame(delta);
     
     // Camera follows the player snail
