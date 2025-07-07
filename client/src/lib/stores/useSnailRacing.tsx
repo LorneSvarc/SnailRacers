@@ -56,6 +56,8 @@ const SNAIL_BOOST_SPEED = 2.0; // Speed when boosted
 const BOOST_DURATION = 4.0; // 4 seconds boost duration
 const OOZE_BOMB_TRAVEL_SPEED = 8.0;
 const OOZE_BOMB_RANGE = 4.0;
+const AI_BOMB_DETECTION_RANGE = 8.0; // How far AI can see bombs
+const AI_LANE_CHANGE_SPEED = 0.3; // How fast AI changes lanes
 
 export const useSnailRacing = create<SnailRacingState>()(
   subscribeWithSelector((set, get) => ({
@@ -160,7 +162,7 @@ export const useSnailRacing = create<SnailRacingState>()(
           };
         }
         
-        // Update AI snails
+        // Update AI snails with smart behavior
         const updatedAiSnails = state.aiSnails.map((snail, index) => {
           let updatedSnail = { ...snail };
           
@@ -171,9 +173,38 @@ export const useSnailRacing = create<SnailRacingState>()(
             updatedSnail.boosted = newTimer > 0;
           }
           
-          // Simple AI: move forward with occasional ooze bomb deployment
           const newPosition = snail.position.clone();
-          const currentSpeed = snail.boosted ? SNAIL_BOOST_SPEED : snail.speed;
+          let currentSpeed = snail.boosted ? SNAIL_BOOST_SPEED : snail.speed;
+          
+          // Smart AI: Look for nearby active bombs to steal
+          const nearestActiveBomb = updatedOozeBombs
+            .filter(bomb => bomb.active)
+            .map(bomb => ({
+              bomb,
+              distance: Math.abs(bomb.position.x - newPosition.x) + Math.abs(bomb.position.z - newPosition.z)
+            }))
+            .sort((a, b) => a.distance - b.distance)[0];
+          
+          // If there's a nearby bomb, try to steer toward it
+          if (nearestActiveBomb && nearestActiveBomb.distance < 8) {
+            const bombPos = nearestActiveBomb.bomb.position;
+            
+            // Move toward the bomb's Z position (lane switching)
+            const zDiff = bombPos.z - newPosition.z;
+            if (Math.abs(zDiff) > 0.5) {
+              const laneSpeed = currentSpeed * 0.3 * delta;
+              if (zDiff > 0) {
+                newPosition.z += Math.min(laneSpeed, zDiff);
+              } else {
+                newPosition.z += Math.max(-laneSpeed, zDiff);
+              }
+            }
+            
+            // Speed up slightly when chasing bombs
+            currentSpeed *= 1.2;
+          }
+          
+          // Normal forward movement
           newPosition.x += currentSpeed * delta;
           
           // Check for collision with any active ooze bomb
@@ -196,8 +227,13 @@ export const useSnailRacing = create<SnailRacingState>()(
           
           updatedSnail.position = newPosition;
           
-          // AI deployment of ooze bombs (random chance)
-          if (Math.random() < 0.001) { // Very low chance per frame
+          // Strategic bomb deployment
+          const shouldDeployBomb = 
+            Math.random() < 0.003 || // Random chance (higher than before)
+            (newPosition.x > 0 && Math.random() < 0.008) || // More likely in the second half
+            (updatedSnail.boosted && Math.random() < 0.01); // More likely when boosted
+          
+          if (shouldDeployBomb) {
             get().deployOozeBomb(`ai-${index}`);
           }
           

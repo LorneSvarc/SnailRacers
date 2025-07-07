@@ -39,6 +39,10 @@ export function calculateDistance(pos1: THREE.Vector3, pos2: THREE.Vector3): num
   return pos1.distanceTo(pos2);
 }
 
+export function calculateManhattanDistance(pos1: THREE.Vector3, pos2: THREE.Vector3): number {
+  return Math.abs(pos1.x - pos2.x) + Math.abs(pos1.z - pos2.z);
+}
+
 export function normalizeVector(vector: THREE.Vector3): THREE.Vector3 {
   return vector.clone().normalize();
 }
