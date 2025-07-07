@@ -86,16 +86,6 @@ export const useSnailRacing = create<SnailRacingState>()(
         boostTimer: 0,
       }));
       
-      // Create a test AI bomb to verify rendering
-      const testBomb: OozeBomb = {
-        id: "test-ai-bomb",
-        snailId: "ai-0",
-        position: new THREE.Vector3(-20, 0.4, -2.5),
-        startPosition: new THREE.Vector3(-25, 0.4, -2.5),
-        active: false,
-        timer: 10.0,
-      };
-
       set({
         gameState: "waiting",
         raceTime: 0,
@@ -109,12 +99,12 @@ export const useSnailRacing = create<SnailRacingState>()(
           boostTimer: 0,
         },
         aiSnails,
-        oozeBombs: [testBomb], // Start with one test bomb
+        oozeBombs: [],
         oozeTrails: [],
         playerPosition: 1,
       });
       
-      console.log("🧪 Game initialized with test AI bomb - should be visible on track");
+      console.log("🎮 Game initialized - AI bombs will deploy during race");
     },
     
     updateGame: (delta: number) => {
@@ -166,10 +156,10 @@ export const useSnailRacing = create<SnailRacingState>()(
         }).filter(Boolean) as OozeBomb[];
         
         // Debug: Log how many bombs remain after update
-        console.log(`🎯 After update: ${updatedOozeBombs.length} bombs remaining (started with ${currentState.oozeBombs.length})`);
+        console.log(`🎯 After update: ${updatedOozeBombs.length} bombs remaining (started with ${state.oozeBombs.length})`);
         
         // Update ooze trails
-        const updatedOozeTrails = currentState.oozeTrails.map(trail => {
+        const updatedOozeTrails = state.oozeTrails.map(trail => {
           const newTimer = trail.timer - delta;
           if (newTimer <= 0) {
             return null; // Remove trail
@@ -178,7 +168,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         }).filter(Boolean) as OozeTrail[];
         
         // Update player snail - only boost timer (collision handled in movement)
-        let updatedPlayerSnail = currentState.playerSnail;
+        let updatedPlayerSnail = state.playerSnail;
         if (updatedPlayerSnail && updatedPlayerSnail.boostTimer > 0) {
           const newTimer = updatedPlayerSnail.boostTimer - delta;
           updatedPlayerSnail = {
@@ -261,7 +251,21 @@ export const useSnailRacing = create<SnailRacingState>()(
             (nearestActiveBomb && nearestActiveBomb.distance < 5 && Math.random() < 0.01); // 1% chance when near other bombs
           
           if (shouldDeployBomb) {
-            get().deployOozeBomb(`ai-${index}`);
+            console.log(`🤖 AI ${index} deploying bomb!`);
+            // Deploy bomb directly in update loop to avoid race condition
+            const bombId = `ai-${index}-bomb-${Date.now()}`;
+            const newBomb: OozeBomb = {
+              id: bombId,
+              snailId: `ai-${index}`,
+              position: updatedSnail.position.clone(),
+              startPosition: updatedSnail.position.clone(),
+              active: false,
+              timer: 10.0,
+            };
+            
+            // Add the bomb to the current update
+            updatedOozeBombs.push(newBomb);
+            console.log(`💣 AI bomb ${bombId} deployed at x:${updatedSnail.position.x.toFixed(1)}`);
           }
           
           return updatedSnail;
