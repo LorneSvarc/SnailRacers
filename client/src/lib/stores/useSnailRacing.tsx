@@ -201,6 +201,11 @@ export const useSnailRacing = create<SnailRacingState>()(
             bombCooldown: newBombCooldown,
           };
           
+          // Debug boost state
+          if (updatedPlayerSnail.boosted) {
+            console.log(`🚀 Player is boosted! Timer: ${newBoostTimer.toFixed(2)}s`);
+          }
+          
           // Spawn trail segments if boosted
           if (updatedPlayerSnail.boosted) {
             const currentTime = state.raceTime;
@@ -217,6 +222,7 @@ export const useSnailRacing = create<SnailRacingState>()(
               
               newTrailSegments.push(trailSegment);
               updatedPlayerSnail.lastTrailSpawnTime = currentTime;
+              console.log(`✨ Player trail segment spawned at x:${trailSegment.position.x.toFixed(1)}, z:${trailSegment.position.z.toFixed(1)}, color:${trailSegment.color}`);
             }
           }
         }
@@ -296,12 +302,15 @@ export const useSnailRacing = create<SnailRacingState>()(
           if (nearbyOozeBomb) {
             updatedSnail.boosted = true;
             updatedSnail.boostTimer = BOOST_DURATION;
+            updatedSnail.lastTrailSpawnTime = 0; // Reset trail spawn timer
             
             // Remove the bomb after collision
             const bombIndex = updatedOozeBombs.indexOf(nearbyOozeBomb);
             if (bombIndex > -1) {
               updatedOozeBombs.splice(bombIndex, 1);
             }
+            
+            console.log(`🚀 AI ${index} hit bomb! Boost activated for ${BOOST_DURATION} seconds`);
           }
           
           updatedSnail.position = newPosition;
@@ -390,6 +399,11 @@ export const useSnailRacing = create<SnailRacingState>()(
             aiSnails: updatedAiSnails,
             playerPosition: currentPlayerPosition,
           });
+          
+          // Debug trail segments count
+          if (newTrailSegments.length > 0) {
+            console.log(`🌟 Total trail segments: ${newTrailSegments.length}`);
+          }
         }
       }
     },
@@ -541,6 +555,9 @@ export function useSnailRacingControls() {
               // Remove the bomb
               newOozeBombs = currentState.oozeBombs.filter(bomb => bomb.id !== nearbyBomb.id);
               console.log('Player hit bomb! Boost activated for', BOOST_DURATION, 'seconds');
+              
+              // Reset trail spawn timer to start spawning immediately
+              updatedPlayerSnail.lastTrailSpawnTime = 0;
             }
           }
           
