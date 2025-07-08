@@ -284,40 +284,54 @@ export const useSnailRacing = create<SnailRacingState>()(
           return updatedSnail;
         });
         
-        // Check for race finish
+        // Check for race finish - race ends when player finishes OR only one snail left racing
         const allSnails = [updatedPlayerSnail, ...updatedAiSnails].filter(Boolean);
         const finishedSnails = allSnails
           .map((snail, index) => ({ snail, index, isPlayer: index === 0 }))
           .filter(({ snail }) => snail.position.x >= FINISH_LINE_X)
           .sort((a, b) => b.snail.position.x - a.snail.position.x);
         
-        if (finishedSnails.length > 0) {
-          const playerFinished = finishedSnails.find(s => s.isPlayer);
-          const playerPosition = playerFinished ? finishedSnails.indexOf(playerFinished) + 1 : allSnails.length;
+        const playerFinished = finishedSnails.find(s => s.isPlayer);
+        const racingSnails = allSnails.filter(snail => snail.position.x < FINISH_LINE_X);
+        
+        // Race ends if: player finished, only 1 snail left racing, or 3+ snails finished
+        const shouldEndRace = playerFinished || racingSnails.length <= 1 || finishedSnails.length >= 3;
+        
+        if (shouldEndRace) {
+          // Calculate final positions based on current positions (not just finished snails)
+          const sortedAllSnails = allSnails
+            .map((snail, index) => ({ snail, index, isPlayer: index === 0 }))
+            .sort((a, b) => b.snail.position.x - a.snail.position.x);
+          
+          const playerIndex = sortedAllSnails.findIndex(s => s.isPlayer);
+          const finalPlayerPosition = playerIndex + 1;
+          
+          console.log(`🏁 Race finished! Player position: ${finalPlayerPosition}/4`);
+          console.log(`   Final standings: ${sortedAllSnails.map((s, i) => `${i+1}. ${s.isPlayer ? 'PLAYER' : `AI-${s.index-1}`} (x:${s.snail.position.x.toFixed(1)})`).join(', ')}`);
           
           set({
             gameState: "finished",
-            playerPosition,
+            playerPosition: finalPlayerPosition,
             oozeBombs: updatedOozeBombs,
             oozeTrails: updatedOozeTrails,
             playerSnail: updatedPlayerSnail,
             aiSnails: updatedAiSnails,
           });
         } else {
-          // Calculate player position
+          // Calculate current player position during race
           const sortedSnails = allSnails
             .map((snail, index) => ({ snail, index, isPlayer: index === 0 }))
             .sort((a, b) => b.snail.position.x - a.snail.position.x);
           
           const playerIndex = sortedSnails.findIndex(s => s.isPlayer);
-          const playerPosition = playerIndex + 1;
+          const currentPlayerPosition = playerIndex + 1;
           
           set({
             oozeBombs: updatedOozeBombs,
             oozeTrails: updatedOozeTrails,
             playerSnail: updatedPlayerSnail,
             aiSnails: updatedAiSnails,
-            playerPosition,
+            playerPosition: currentPlayerPosition,
           });
         }
       }

@@ -43,10 +43,6 @@ export default function SnailRacing() {
 
   // Game loop
   useFrame((state, delta) => {
-    // Debug: Log bomb count every few frames
-    if (Math.random() < 0.05) { // 5% of the time
-      console.log(`🔄 Component sees ${oozeBombs.length} bombs in state`);
-    }
     updateGame(delta);
     
     // Camera follows the player snail
