@@ -6,6 +6,7 @@ import Snail from "./Snail";
 import GameUI from "./GameUI";
 import Environment from "./Environment";
 import OozeBomb from "./OozeBomb";
+import TrailSegment from "./TrailSegment";
 import { useSnailRacing, useSnailRacingControls } from "../../lib/stores/useSnailRacing";
 import { useAudio } from "../../lib/stores/useAudio";
 
@@ -17,6 +18,7 @@ export default function SnailRacing() {
   const aiSnails = useSnailRacing((state) => state.aiSnails);
   const oozeBombs = useSnailRacing((state) => state.oozeBombs);
   const oozeTrails = useSnailRacing((state) => state.oozeTrails);
+  const trailSegments = useSnailRacing((state) => state.trailSegments);
   const initializeGame = useSnailRacing((state) => state.initializeGame);
   const updateGame = useSnailRacing((state) => state.updateGame);
   const resetGame = useSnailRacing((state) => state.resetGame);
@@ -118,6 +120,14 @@ export default function SnailRacing() {
         );
       })}
       
+      {/* Trail segments */}
+      {trailSegments?.map((segment) => (
+        <TrailSegment
+          key={segment.id}
+          position={[segment.position.x, segment.position.y, segment.position.z]}
+          color={segment.color}
+        />
+      ))}
 
     </>
   );

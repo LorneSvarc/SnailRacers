@@ -17,6 +17,7 @@ interface SnailData {
   boosted: boolean;
   boostTimer: number;
   bombCooldown: number; // Time until next bomb can be deployed
+  lastTrailSpawnTime: number; // Track when last trail segment was spawned
 }
 
 interface OozeBomb {
@@ -35,6 +36,14 @@ interface OozeTrail {
   timer: number;
 }
 
+interface TrailSegment {
+  id: string;
+  ownerSnailId: string;
+  position: THREE.Vector3;
+  color: string;
+  spawnTime: number;
+}
+
 interface SnailRacingState {
   gameState: GameState;
   raceTime: number;
@@ -42,6 +51,7 @@ interface SnailRacingState {
   aiSnails: SnailData[];
   oozeBombs: OozeBomb[];
   oozeTrails: OozeTrail[];
+  trailSegments: TrailSegment[];
   playerPosition: number;
   
   // Actions
@@ -89,6 +99,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         boosted: false,
         boostTimer: 0,
         bombCooldown: 0, // Start with no cooldown
+        lastTrailSpawnTime: 0,
       }));
       
       set({
@@ -104,10 +115,12 @@ export const useSnailRacing = create<SnailRacingState>()(
           boosted: false,
           boostTimer: 0,
           bombCooldown: 0, // Start with no cooldown
+          lastTrailSpawnTime: 0,
         },
         aiSnails,
         oozeBombs: [],
         oozeTrails: [],
+        trailSegments: [],
         playerPosition: 1,
       });
       
@@ -176,6 +189,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         
         // Update player snail - boost timer and bomb cooldown
         let updatedPlayerSnail = state.playerSnail;
+        let newTrailSegments = [...state.trailSegments];
         if (updatedPlayerSnail) {
           const newBoostTimer = Math.max(0, updatedPlayerSnail.boostTimer - delta);
           const newBombCooldown = Math.max(0, updatedPlayerSnail.bombCooldown - delta);
@@ -186,6 +200,25 @@ export const useSnailRacing = create<SnailRacingState>()(
             boosted: newBoostTimer > 0,
             bombCooldown: newBombCooldown,
           };
+          
+          // Spawn trail segments if boosted
+          if (updatedPlayerSnail.boosted) {
+            const currentTime = state.raceTime;
+            const timeSinceLastSpawn = currentTime - updatedPlayerSnail.lastTrailSpawnTime;
+            
+            if (timeSinceLastSpawn >= 0.2) { // Spawn every 0.2 seconds
+              const trailSegment: TrailSegment = {
+                id: `trail-${updatedPlayerSnail.id}-${Date.now()}`,
+                ownerSnailId: updatedPlayerSnail.id,
+                position: updatedPlayerSnail.position.clone(),
+                color: updatedPlayerSnail.shellColor,
+                spawnTime: currentTime,
+              };
+              
+              newTrailSegments.push(trailSegment);
+              updatedPlayerSnail.lastTrailSpawnTime = currentTime;
+            }
+          }
         }
         
         // Update AI snails with smart behavior
@@ -199,6 +232,25 @@ export const useSnailRacing = create<SnailRacingState>()(
           updatedSnail.boostTimer = newBoostTimer;
           updatedSnail.boosted = newBoostTimer > 0;
           updatedSnail.bombCooldown = newBombCooldown;
+          
+          // Spawn trail segments if boosted
+          if (updatedSnail.boosted) {
+            const currentTime = state.raceTime;
+            const timeSinceLastSpawn = currentTime - updatedSnail.lastTrailSpawnTime;
+            
+            if (timeSinceLastSpawn >= 0.2) { // Spawn every 0.2 seconds
+              const trailSegment: TrailSegment = {
+                id: `trail-${updatedSnail.id}-${Date.now()}`,
+                ownerSnailId: updatedSnail.id,
+                position: updatedSnail.position.clone(),
+                color: updatedSnail.shellColor,
+                spawnTime: currentTime,
+              };
+              
+              newTrailSegments.push(trailSegment);
+              updatedSnail.lastTrailSpawnTime = currentTime;
+            }
+          }
           
           const newPosition = snail.position.clone();
           let currentSpeed = snail.boosted ? SNAIL_BOOST_SPEED : snail.speed;
@@ -317,6 +369,7 @@ export const useSnailRacing = create<SnailRacingState>()(
             playerPosition: finalPlayerPosition,
             oozeBombs: updatedOozeBombs,
             oozeTrails: updatedOozeTrails,
+            trailSegments: newTrailSegments,
             playerSnail: updatedPlayerSnail,
             aiSnails: updatedAiSnails,
           });
@@ -332,6 +385,7 @@ export const useSnailRacing = create<SnailRacingState>()(
           set({
             oozeBombs: updatedOozeBombs,
             oozeTrails: updatedOozeTrails,
+            trailSegments: newTrailSegments,
             playerSnail: updatedPlayerSnail,
             aiSnails: updatedAiSnails,
             playerPosition: currentPlayerPosition,
