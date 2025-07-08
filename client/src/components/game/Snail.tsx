@@ -6,6 +6,7 @@ import OozeBomb from "./OozeBomb";
 import ParticleSystem from "./ParticleSystem";
 
 interface SnailProps {
+  id: string;
   position: [number, number, number];
   rotation: [number, number, number];
   isPlayer: boolean;
@@ -13,7 +14,7 @@ interface SnailProps {
   shellColor: string;
 }
 
-export default function Snail({ position, rotation, isPlayer, color, shellColor }: SnailProps) {
+export default function Snail({ id, position, rotation, isPlayer, color, shellColor }: SnailProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { oozeBombs, oozeTrails } = useSnailRacing();
   
@@ -90,7 +91,7 @@ export default function Snail({ position, rotation, isPlayer, color, shellColor 
       
       {/* Ooze trail particles */}
       {oozeTrails
-        .filter(trail => trail.snailId === (isPlayer ? 'player' : 'ai'))
+        .filter(trail => trail.snailId === id)
         .map((trail, index) => (
           <ParticleSystem
             key={`trail-${trail.snailId}-${index}`}

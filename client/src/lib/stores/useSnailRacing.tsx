@@ -8,6 +8,7 @@ import * as THREE from "three";
 export type GameState = "waiting" | "racing" | "finished";
 
 interface SnailData {
+  id: string;
   position: THREE.Vector3;
   rotation: number;
   speed: number;
@@ -79,6 +80,7 @@ export const useSnailRacing = create<SnailRacingState>()(
       ];
       
       const aiSnails = aiColors.map((colorData, index) => ({
+        id: `ai_${index}`,
         position: new THREE.Vector3(-28, 0, -2.5 + index * 1.5), // Start at -2.5, -1, 0.5
         rotation: 0,
         speed: SNAIL_BASE_SPEED * (0.8 + Math.random() * 0.4), // Slight speed variation
@@ -93,6 +95,7 @@ export const useSnailRacing = create<SnailRacingState>()(
         gameState: "waiting",
         raceTime: 0,
         playerSnail: {
+          id: "player",
           position: new THREE.Vector3(-28, 0, 2), // Player at lane 2
           rotation: 0,
           speed: SNAIL_BASE_SPEED,
@@ -263,10 +266,10 @@ export const useSnailRacing = create<SnailRacingState>()(
           if (shouldDeployBomb) {
             console.log(`🤖 AI ${index} deploying bomb!`);
             // Deploy bomb directly in update loop to avoid race condition
-            const bombId = `ai-${index}-bomb-${Date.now()}`;
+            const bombId = `${updatedSnail.id}-bomb-${Date.now()}`;
             const newBomb: OozeBomb = {
               id: bombId,
-              snailId: `ai-${index}`,
+              snailId: updatedSnail.id,
               position: updatedSnail.position.clone(),
               startPosition: updatedSnail.position.clone(),
               active: false,
@@ -344,7 +347,7 @@ export const useSnailRacing = create<SnailRacingState>()(
     deployOozeBomb: (snailId: string) => {
       const state = get();
       const isPlayer = snailId === 'player';
-      const snail = isPlayer ? state.playerSnail : state.aiSnails[parseInt(snailId.split('-')[1])];
+      const snail = isPlayer ? state.playerSnail : state.aiSnails.find(s => s.id === snailId);
       
       if (!snail || snail.bombCooldown > 0) {
         if (snail && snail.bombCooldown > 0) {
@@ -373,10 +376,9 @@ export const useSnailRacing = create<SnailRacingState>()(
           oozeBombs: [...state.oozeBombs, newBomb],
         });
       } else {
-        const aiIndex = parseInt(snailId.split('-')[1]);
         set({
-          aiSnails: state.aiSnails.map((s, i) => 
-            i === aiIndex ? { ...s, bombCooldown: BOMB_COOLDOWN_TIME } : s
+          aiSnails: state.aiSnails.map((s) => 
+            s.id === snailId ? { ...s, bombCooldown: BOMB_COOLDOWN_TIME } : s
           ),
           oozeBombs: [...state.oozeBombs, newBomb],
         });

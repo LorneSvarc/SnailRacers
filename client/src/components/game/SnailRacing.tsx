@@ -85,6 +85,7 @@ export default function SnailRacing() {
       {playerSnail && (
         <Snail
           key="player"
+          id={playerSnail.id}
           position={[playerSnail.position.x, playerSnail.position.y, playerSnail.position.z]}
           rotation={[0, playerSnail.rotation, 0]}
           isPlayer={true}
@@ -97,6 +98,7 @@ export default function SnailRacing() {
       {aiSnails.map((snail, index) => (
         <Snail
           key={`ai-${index}`}
+          id={snail.id}
           position={[snail.position.x, snail.position.y, snail.position.z]}
           rotation={[0, snail.rotation, 0]}
           isPlayer={false}
