@@ -121,16 +121,13 @@ export default function SnailRacing() {
       })}
       
       {/* Trail segments */}
-      {trailSegments?.map((segment) => {
-        console.log(`🎨 Rendering trail segment: ${segment.id} at x:${segment.position.x.toFixed(1)}, z:${segment.position.z.toFixed(1)}, color:${segment.color}`);
-        return (
-          <TrailSegment
-            key={segment.id}
-            position={[segment.position.x, segment.position.y, segment.position.z]}
-            color={segment.color}
-          />
-        );
-      })}
+      {trailSegments?.map((segment) => (
+        <TrailSegment
+          key={segment.id}
+          position={[segment.position.x, segment.position.y, segment.position.z]}
+          color={segment.color}
+        />
+      ))}
 
     </>
   );
